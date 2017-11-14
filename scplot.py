@@ -1,46 +1,80 @@
-# This script will plot whatever decompressed search coil data is in the current folder.
-# TODO: Import the bitstream into a numpy array sooner
-#       Other speed related tasks
-#       Read encrypted files
+# This script will plot whatever search coil data is in the current folder.
+# TODO: Put datetimes on the x axis
+#       Label the plots
+#       Adjust the timeseries so they line up with the specgrams
 #       Modularize, yada yada
 
 import os
+import gzip
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-filelist = [x if '.' not in x else '' for x in os.listdir() if '.' not in x]
+##############################################################################
+# IMPORT
+
+zip_list = [s for s in os.listdir() if s.endswith('.dat.gz')]
 hex = b''
-for file in filelist:
-    with open(file, mode='rb') as bitstream:
+for file in zip_list:
+    with gzip.open(file, mode='rb') as bitstream:
         hex = hex + bitstream.read()
+
+##############################################################################
+# PROCESS
+
 # merge all binary values into a single stream
-# NOTE: This also fixes the leading zeros
-second = ''.join(['{:08b}'.format(x) for x in hex])
+# NOTE: This also fixes the stripped leading zeros from read
+binstr = ''.join(['{:08b}'.format(x) for x in hex])
 # separate the stream into 12bit ADC values
-binsec = [second[i:i + 12] for i in range(0, len(second), 12)]
+binstr = [binstr[i:i + 12] for i in range(0, len(binstr), 12)]
 # convert the binary values to integers
-sec1 = [int(x, 2) for x in binsec]
-sec1 = [x - 4096 if x > 2047 else x for x in sec1]
+intstr = [int(x, 2) for x in binstr]
+intstr = [x - 4096 if x > 2047 else x for x in intstr]
 # group the X/Y by sample
-xy = [sec1[i:i + 2] for i in range(0, len(sec1), 2)]
-xs = [x[0] for x in xy]
-xs = np.array(xs)
-xs = xs * (.0049 / 4.43)
+all_samples = [intstr[i:i + 2] for i in range(0, len(intstr), 2)]
+# cleanup
+del binstr
+del intstr
 
-plt.specgram(xs, NFFT=1024, noverlap=256 * 3, Fs=10,
-             cmap='terrain', scale='dB')
-plt.ylim(ymax=1)
-plt.clim(0, -60)
-plt.colorbar()
-plt.show()
+# numpyfy the x values
+x_samples = np.array([x[0] for x in all_samples])
+# scale them to our system (bit conversion / ADC Gain)
+x_samples = x_samples * (.0049 / 4.43)
 
-ys = [x[1] for x in xy]
-ys = np.array(ys)
-ys = ys * (.0049 / 4.43)
-plt.subplot(212)
-plt.specgram(ys, NFFT=1024, noverlap=256 * 3, Fs=10,
-             cmap='winter', detrend='linear', scale='dB')
-plt.colorbar()
+# numpyfy the y values
+y_samples = np.array([x[1] for x in all_samples])
+# scale them to our system (bit conversion / ADC Gain)
+y_samples = y_samples * (.0049 / 4.43)
+
+##############################################################################
+# PLOTS
+
+f, axs = plt.subplots(4)
+
+axs[0].plot(x_samples)
+axs[0].axis([0, 864000, -0.25, 0.25])
+
+axs[1].specgram(x_samples, NFFT=1024, noverlap=256 * 3, Fs=10,
+                cmap='terrain', scale='dB')
+for im in axs[1].get_images():
+    im.set_clim(-60, 0)
+divider = make_axes_locatable(axs[1])
+cax = divider.append_axes("right", "2%", pad="1%")
+plt.colorbar(im, cax=cax)
+
+plt.tight_layout()
+
+axs[2].plot(y_samples)
+axs[2].axis([0, 864000, -0.25, 0.25])
+
+axs[3].specgram(y_samples, NFFT=1024, noverlap=256 * 3, Fs=10,
+                cmap='terrain', detrend='linear', scale='dB')
+for im in axs[3].get_images():
+    im.set_clim(-60, 0)
+divider = make_axes_locatable(axs[3])
+cax = divider.append_axes("right", "2%", pad="1%")
+plt.colorbar(im, cax=cax)
+
 plt.show()
 
 exit()
