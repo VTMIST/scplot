@@ -7,8 +7,6 @@ NOTE: This is written for Python 3.
 
 Major items that need to be addressed:
   * Timestamps on the X axis of each spectrogram
-  * Additionally plot the timeseries data
-  * Speed up processing by converting to numpy arrays sooner
   * Better options for input handling
   * Format the code as a proper importable module (declare functions, etc)
 
