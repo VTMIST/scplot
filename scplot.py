@@ -11,7 +11,7 @@ import matplotlib.dates as mdates
 ##############################################################################
 # IMPORT
 
-scpath = './'
+scpath = './sc/2015_01_01/'
 sc_zip_list = [s for s in os.listdir(scpath) if s.endswith('.dat.gz')]
 hex = b''
 datetimes = []
@@ -70,11 +70,13 @@ s, f, t, im = ax0.specgram(x_samples, NFFT=1024, noverlap=256 * 3, Fs=10,
                            cmap='terrain', scale='dB')
 im.set_clim(-60, 0)
 ax0.set_xticklabels([])
+ax0.set_xticks([])
 # divider = make_axes_locatable(axs[1])
 # cax = divider.append_axes("right", "2%", pad="1%")
 # plt.colorbar(im, cax=cax)
 
 ax01.plot(datetimes, x_samples, 'None')
+ax01.margins(0, 0)
 ax01.set_yticklabels([])
 ax01.xaxis.set_major_locator(hours)
 ax01.xaxis.set_major_formatter(hourFmt)
@@ -88,11 +90,13 @@ s, f, t, im = ax2.specgram(y_samples, NFFT=1024, noverlap=256 * 3, Fs=10,
                            cmap='terrain', scale='dB')
 im.set_clim(-60, 0)
 ax2.set_xticklabels([])
+ax2.set_xticks([])
 # divider = make_axes_locatable(axs[3])
 # cax = divider.append_axes("right", "2%", pad="1%")
 # plt.colorbar(im, cax=cax)
 
 ax21.plot(datetimes, x_samples, 'None')
+ax21.margins(0, 0)
 ax21.set_yticklabels([])
 ax21.xaxis.set_major_locator(hours)
 ax21.xaxis.set_major_formatter(hourFmt)
